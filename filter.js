@@ -1,184 +1,187 @@
 (function () {
-  "use strict";
+    "use strict";
 
-  function startFilter() {
-    var table = document.getElementById("content_block_19");
+    function initSkillCardFilter() {
+        var table = document.querySelector("table.sort.filter");
 
-    if (!table) {
-      return false;
-    }
-
-    // すでに作成済みなら何もしない
-    if (document.getElementById("exe-arena-filter")) {
-      return true;
-    }
-
-    var rows = table.querySelectorAll("tbody tr");
-
-    // フィルター用コンテナ
-    var box = document.createElement("div");
-    box.id = "exe-arena-filter";
-
-    box.innerHTML =
-      '<div class="exe-filter-title">スキルカード検索</div>' +
-      '<div class="exe-filter-row">' +
-        '<label>属性<select id="exe-filter-attr"><option value="">すべて</option></select></label>' +
-        '<label>コスト<select id="exe-filter-cost"><option value="">すべて</option></select></label>' +
-        '<label>レアリティ<select id="exe-filter-rarity"><option value="">すべて</option></select></label>' +
-        '<label>効果タイプ<select id="exe-filter-effect"><option value="">すべて</option></select></label>' +
-        '<label>入手方法<select id="exe-filter-get"><option value="">すべて</option></select></label>' +
-        '<label>備考<select id="exe-filter-note"><option value="">すべて</option></select></label>' +
-        '<button type="button" id="exe-filter-reset">リセット</button>' +
-      '</div>';
-
-    // テーブルの直前に追加
-    table.parentNode.insertBefore(box, table);
-
-    // 各列から選択肢を自動取得
-    var settings = [
-      { id: "exe-filter-attr", col: 1 },
-      { id: "exe-filter-cost", col: 2 },
-      { id: "exe-filter-rarity", col: 3 },
-      { id: "exe-filter-effect", col: 4 },
-      { id: "exe-filter-get", col: 6 },
-      { id: "exe-filter-note", col: 7 }
-    ];
-
-    settings.forEach(function (setting) {
-      var select = document.getElementById(setting.id);
-      var values = [];
-
-      rows.forEach(function (row) {
-        var cell = row.cells[setting.col];
-
-        if (!cell) {
-          return;
+        if (!table) {
+            return;
         }
 
-        var value = cell.textContent.trim();
-
-        if (value && values.indexOf(value) === -1) {
-          values.push(value);
-        }
-      });
-
-      values.sort(function (a, b) {
-        return a.localeCompare(b, "ja");
-      });
-
-      values.forEach(function (value) {
-        var option = document.createElement("option");
-        option.value = value;
-        option.textContent = value;
-        select.appendChild(option);
-      });
-    });
-
-    // フィルター処理
-    function filterRows() {
-      var attr = document.getElementById("exe-filter-attr").value;
-      var cost = document.getElementById("exe-filter-cost").value;
-      var rarity = document.getElementById("exe-filter-rarity").value;
-      var effect = document.getElementById("exe-filter-effect").value;
-      var get = document.getElementById("exe-filter-get").value;
-      var note = document.getElementById("exe-filter-note").value;
-
-      rows.forEach(function (row) {
-        var cells = row.cells;
-
-        if (!cells || cells.length < 8) {
-          return;
+        if (document.getElementById("exe-skill-filter")) {
+            return;
         }
 
-        var match =
-          (!attr || cells[1].textContent.trim() === attr) &&
-          (!cost || cells[2].textContent.trim() === cost) &&
-          (!rarity || cells[3].textContent.trim() === rarity) &&
-          (!effect || cells[4].textContent.trim() === effect) &&
-          (!get || cells[6].textContent.trim() === get) &&
-          (!note || cells[7].textContent.trim() === note);
+        var filters = [
+            {
+                name: "属性",
+                column: 1,
+                values: ["火", "水", "木", "無"]
+            },
+            {
+                name: "コスト",
+                column: 2,
+                values: ["1", "2", "3", "4", "5"]
+            },
+            {
+                name: "レアリティ",
+                column: 3,
+                values: ["COMMON", "RARE", "EPIC", "PLATINUM", "LEGEND"]
+            },
+            {
+                name: "効果タイプ",
+                column: 4,
+                values: ["攻撃", "設置", "回復"]
+            },
+            {
+                name: "入手方法",
+                column: 6,
+                values: ["パック", "報酬", "配布"]
+            },
+            {
+                name: "備考",
+                column: 7,
+                values: ["火傷", "凍結", "凍結特効", "麻痺", "ヒビ", "透明", "対透明性能"]
+            }
+        ];
 
-        row.style.display = match ? "" : "none";
-      });
-    }
+        var filterBox = document.createElement("div");
+        filterBox.id = "exe-skill-filter";
 
-    settings.forEach(function (setting) {
-      document
-        .getElementById(setting.id)
-        .addEventListener("change", filterRows);
-    });
+        filterBox.style.margin = "15px 0";
+        filterBox.style.padding = "15px";
+        filterBox.style.border = "1px solid #ccc";
+        filterBox.style.borderRadius = "8px";
+        filterBox.style.backgroundColor = "#f8f8f8";
 
-    // リセット
-    document
-      .getElementById("exe-filter-reset")
-      .addEventListener("click", function () {
-        settings.forEach(function (setting) {
-          document.getElementById(setting.id).value = "";
+        var title = document.createElement("div");
+        title.textContent = "スキルカード検索";
+        title.style.fontWeight = "bold";
+        title.style.fontSize = "18px";
+        title.style.marginBottom = "12px";
+
+        filterBox.appendChild(title);
+
+        var selects = [];
+
+        filters.forEach(function (filter) {
+            var wrapper = document.createElement("span");
+
+            wrapper.style.display = "inline-block";
+            wrapper.style.marginRight = "10px";
+            wrapper.style.marginBottom = "10px";
+
+            var label = document.createElement("label");
+
+            label.textContent = filter.name + "：";
+            label.style.fontWeight = "bold";
+
+            var select = document.createElement("select");
+
+            select.style.padding = "5px";
+            select.style.marginLeft = "3px";
+
+            var allOption = document.createElement("option");
+            allOption.value = "";
+            allOption.textContent = "すべて";
+
+            select.appendChild(allOption);
+
+            filter.values.forEach(function (value) {
+                var option = document.createElement("option");
+
+                option.value = value;
+                option.textContent = value;
+
+                select.appendChild(option);
+            });
+
+            wrapper.appendChild(label);
+            wrapper.appendChild(select);
+
+            filterBox.appendChild(wrapper);
+
+            selects.push({
+                select: select,
+                column: filter.column
+            });
+
+            select.addEventListener("change", applyFilter);
         });
 
-        filterRows();
-      });
+        var resetButton = document.createElement("button");
 
-    // CSS
-    var style = document.createElement("style");
+        resetButton.type = "button";
+        resetButton.textContent = "リセット";
 
-    style.textContent =
-      "#exe-arena-filter{" +
-        "margin:15px 0;" +
-        "padding:15px;" +
-        "border:1px solid #ccc;" +
-        "background:#f7f7f7;" +
-      "}" +
+        resetButton.style.padding = "5px 12px";
+        resetButton.style.cursor = "pointer";
+        resetButton.style.marginBottom = "10px";
 
-      "#exe-arena-filter .exe-filter-title{" +
-        "font-weight:bold;" +
-        "font-size:16px;" +
-        "margin-bottom:10px;" +
-      "}" +
+        resetButton.addEventListener("click", function () {
+            selects.forEach(function (item) {
+                item.select.value = "";
+            });
 
-      "#exe-arena-filter .exe-filter-row{" +
-        "display:flex;" +
-        "flex-wrap:wrap;" +
-        "gap:8px;" +
-        "align-items:end;" +
-      "}" +
+            applyFilter();
+        });
 
-      "#exe-arena-filter label{" +
-        "display:flex;" +
-        "flex-direction:column;" +
-        "font-size:13px;" +
-        "font-weight:bold;" +
-      "}" +
+        filterBox.appendChild(resetButton);
 
-      "#exe-arena-filter select{" +
-        "min-width:110px;" +
-        "padding:5px;" +
-        "margin-top:3px;" +
-      "}" +
+        table.parentNode.insertBefore(filterBox, table);
 
-      "#exe-filter-reset{" +
-        "padding:6px 12px;" +
-        "cursor:pointer;" +
-      "}";
+        function applyFilter() {
+            var rows = table.querySelectorAll("tr");
 
-    document.head.appendChild(style);
+            rows.forEach(function (row, index) {
+                if (index === 0) {
+                    row.style.display = "";
+                    return;
+                }
 
-    return true;
-  }
+                var cells = row.querySelectorAll("td");
 
-  // ページ読み込み後に実行
-  if (startFilter()) {
-    return;
-  }
+                if (!cells.length) {
+                    row.style.display = "";
+                    return;
+                }
 
-  // 表が後から生成される場合に備えて少し待つ
-  var count = 0;
+                var show = true;
 
-  var timer = setInterval(function () {
-    count++;
+                selects.forEach(function (item) {
+                    var selectedValue = item.select.value;
 
-    if (startFilter() || count >= 50) {
-      clearInterval(timer);
+                    if (!selectedValue) {
+                        return;
+                    }
+
+                    var cell = cells[item.column];
+
+                    if (!cell) {
+                        show = false;
+                        return;
+                    }
+
+                    var text = cell.textContent
+                        .replace(/\s+/g, "")
+                        .trim();
+
+                    if (text.indexOf(selectedValue) === -1) {
+                        show = false;
+                    }
+                });
+
+                row.style.display = show ? "" : "none";
+            });
+        }
+
+        applyFilter();
     }
-  }, 200);
+
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", initSkillCardFilter);
+    } else {
+        initSkillCardFilter();
+    }
+
 })();
